@@ -22,16 +22,18 @@ class FixationDataFromCSV(FixationData):
         super(FixationDataFromCSV, self).__init__(**kws)
         log = logging.getLogger('FixationData')
         log.info('Loading %s ...', filename)
-        trial, person, eye, t, x, y = S.loadtxt(filename, 
-                                                delimiter=delimiter, 
-                                                skiprows=skiprows,
-                                                unpack=True,  
-                                                dtype=[('trail',S.int32),
-                                                       ('person',S.int32),
-                                                       ('eye','S1'), #string of len 1
-                                                       ('t',S.float32),
-                                                       ('x',S.float32),
-                                                       ('y',S.float32)])
+        # manually unpack for numpy 1.5 compatibility
+        temp = S.loadtxt(filename, 
+                         delimiter=delimiter, 
+                         skiprows=skiprows,
+                         unpack=False,
+                         dtype=[ ('trail',S.int32),
+                                 ('person',S.int32),
+                                 ('eye','S1'), #string of len 1
+                                 ('t',S.float32),
+                                 ('x',S.float32),
+                                 ('y',S.float32)])
+        trial, person, eye, t, x, y = (temp[n] for n in temp.dtype.names)
         log.info('Found %i entries', trial.size)
         for trial_id in S.unique(trial):
             self.trials[trial_id] = {}
