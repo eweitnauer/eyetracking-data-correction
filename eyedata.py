@@ -22,8 +22,8 @@ class FixationDataFromCSV(FixationData):
     '''Load CSV file and prepare the data for pythonic access.
     
     The format of the CSV file should be:
-       trail, person, eye,        time,  x,     y 
-       int,   int,    'L' or 'R', float, float, float
+       trail, person, file_name, eye,        time,  x,     y 
+       int,   int,    string,   'L' or 'R',  float, float, float
     '''
     def __init__(self, filename="fixation_data.csv", delimiter=",", skiprows=1, **kws):
         if not os.path.isabs(filename):
@@ -38,11 +38,12 @@ class FixationDataFromCSV(FixationData):
                          unpack=False,
                          dtype=[ ('trail',S.int32),
                                  ('person',S.int32),
+                                 ('filename','S40'),
                                  ('eye','S1'), #string of len 1
                                  ('t',S.float32),
                                  ('x',S.float32),
                                  ('y',S.float32)])
-        trial, person, eye, t, x, y = (temp[n] for n in temp.dtype.names)
+        trial, person, filename, eye, t, x, y = (temp[n] for n in temp.dtype.names)
         log.info('Found %i entires', trial.size)
         for trial_id in S.unique(trial):
             self.trials[trial_id] = {}
@@ -50,7 +51,7 @@ class FixationDataFromCSV(FixationData):
                 self.trials[trial_id][person_id] = {}
                 for eye_id in ('L','R'):
                     idx = (trial == trial_id) & (person == person_id) & (eye == eye_id)
-                    self.trials[trial_id][person_id][eye_id] = S.vstack((t[idx], x[idx], y[idx])).T  
+                    self.trials[trial_id][person_id][eye_id] = S.vstack((t[idx], x[idx], y[idx], filename[idx])).T  
         log.info('Loaded trials: ' + str(self.trials.keys()))
         
 
