@@ -5,7 +5,7 @@ import logging
 import os
 
 # constants for the columns in the samples of a EyeTrackerDataSource
-T, X, Y, FILENAME = 0, 1, 2, 3
+T, X, Y = 0, 1, 2
 
 
 class FixationData(object):
@@ -106,6 +106,7 @@ class EyeTrackerDataSource(DS.DataSource):
     
     
     def get_imagepath(self):
+        '''Get the complete absolute path to the image file for the this data source.'''
         return self.data.images_dir + self.data.get_imagepath(self.trial_id, self.person_id)
     
     
@@ -128,7 +129,7 @@ class EyeTrackerDataSource(DS.DataSource):
             name = ''
         else:
             name = str(self.name)
-        return '<DataSource %(name)s trial=%(trial)i, pers.=%(person)i %(eye)s>' \
+        return '<DataSource %(name)s trial=%(trial)i, pers=%(person)i %(eye)s>' \
                % dict(name=name, 
                       n=self.number_of_samples_until_now, 
                       trial=self.trial_id, 

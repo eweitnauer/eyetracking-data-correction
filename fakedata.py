@@ -5,7 +5,11 @@ import scipy as S
 class EyeTrackerFakeDataSource(DS.SeededDataSource):
     '''A data source that fakes fixation data for a static scene.
     
-    At certain locations
+    At certain locations (locs), gaussian blobs are used to generate new
+    fixation data. First a gaussian blob is chosen (with base_probabilities)
+    and then the sigmas are used to get scale the blob. 
+    Optionally the Gaussians can have a covariance that makes them elongated
+    or rotated.
     '''
     def __init__(self, locs=[], sigmas=[], base_probabilities=[], covariances=[],
                  dt=200, sigma_dt=50, **kws):
@@ -14,19 +18,22 @@ class EyeTrackerFakeDataSource(DS.SeededDataSource):
             A list with locations [ (x0,y0), (x1,y1), ..., (xn,xy) ].
         @param sigmas:
             A list with standard deviation values for the (symmetric) Gaussian blobs.
+            Defaults to [1,1,1,...,1]
         @base_probabilities:
             A list with the probabilities for each blob.
             The list will be normalized on __init__.
             Defaults: [ 1/n, 1/n, ..., 1/n ]
         @param covariances: 
-            Optional (if the Gaussians blobs should not be symmetric), you
+            Optional. If the Gaussians blobs should not be symmetric, you
             can assign a list of covariance matrices.
             See scipy.random.multivariate_normal.
         @param dt: 
-            The delta t in milliseconds from one fixation to the next.
+            The delta t in milliseconds from one fixation to the next. 
+            Default to 200.
         @param sigma_dt:
             In order to jitter the t-positions a bit, we draw the delta-t from
             a normal distribution with mean=dt and sigma=sigma_dt.
+            Default to 50.
         '''
         n = len(locs)
         self.locs = locs
