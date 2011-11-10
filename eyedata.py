@@ -5,7 +5,7 @@ import logging
 import os
 
 # constants for the columns in the samples of a EyeTrackerDataSource
-T, X, Y = 0, 1, 2
+T, X, Y, FILENAME = 0, 1, 2, 3
 
 
 class FixationData(object):
@@ -13,8 +13,12 @@ class FixationData(object):
     def __init__(self):
         self.trials  = {}
         
+        
     def query(self, trial_id, person_id, eye='L'):
         return self.trials[trial_id][person_id][eye]
+    
+    def get_imagepath(self, trial_id, person_id):
+        return self.trials[trial_id][person_id]['img_filename']
         
         
 
@@ -31,6 +35,9 @@ class FixationDataFromCSV(FixationData):
         super(FixationDataFromCSV, self).__init__(**kws)
         log = logging.getLogger('FixationData')
         log.info('Loading %s ...', filename)
+        
+        self.images_dir = os.path.dirname(os.path.abspath(__file__)) + os.sep + 'imgs' + os.sep
+        
         # manually unpack for numpy 1.5 compatibility
         temp = S.loadtxt(filename, 
                          delimiter=delimiter, 
@@ -49,9 +56,12 @@ class FixationDataFromCSV(FixationData):
             self.trials[trial_id] = {}
             for person_id in S.unique(person):
                 self.trials[trial_id][person_id] = {}
+                idx = (trial == trial_id) & (person == person_id)
                 for eye_id in ('L','R'):
-                    idx = (trial == trial_id) & (person == person_id) & (eye == eye_id)
-                    self.trials[trial_id][person_id][eye_id] = S.vstack((t[idx], x[idx], y[idx], filename[idx])).T  
+                    idx2 = idx & (eye == eye_id)
+                    self.trials[trial_id][person_id][eye_id] = S.vstack((t[idx2], x[idx2], y[idx2])).T
+                if len(filename[idx]) > 0: 
+                    self.trials[trial_id][person_id]['img_filename'] = filename[idx][0]
         log.info('Loaded trials: ' + str(self.trials.keys()))
         
 
@@ -93,6 +103,10 @@ class EyeTrackerDataSource(DS.DataSource):
                             eye=self.eye)[self._t:self._t+n]
         self._t += n 
         return s.copy()
+    
+    
+    def get_imagepath(self):
+        return self.data.images_dir + self.data.get_imagepath(self.trial_id, self.person_id)
     
     
     def __repr__(self):
