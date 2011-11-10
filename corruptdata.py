@@ -1,6 +1,6 @@
 import mdp
 import scipy as S
-from eyetracker_data import T, X, Z
+from eyetracker_data import T, X, Y
 
 class ShiftEyeTrackingData(mdp.Node):
     '''

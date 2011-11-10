@@ -3,7 +3,9 @@ import scipy as S
 import mdp
 import logging
 import os
-from eyetracker_data import T, X, Z
+
+# constants for the columns in the samples of a EyeTrackerDataSource
+T, X, Y = 0, 1, 2
 
 
 class FixationData(object):
