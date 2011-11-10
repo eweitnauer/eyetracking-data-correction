@@ -1,8 +1,10 @@
-
 import datasource as DS
 import scipy as S
+import mdp
 import logging
 import os
+from eyetracker_data import T, X, Z
+
 
 class FixationData(object):
     ''''Base class for fixation data for several trials over several persons.'''
@@ -15,7 +17,12 @@ class FixationData(object):
         
 
 class FixationDataFromCSV(FixationData):
-    '''Load CVS file and prepare the data for pythonic access.'''
+    '''Load CSV file and prepare the data for pythonic access.
+    
+    The format of the CSV file should be:
+       trail, person, eye,        time,  x,     y 
+       int,   int,    'L' or 'R', float, float, float
+    '''
     def __init__(self, filename="fixation_data.csv", delimiter=",", skiprows=1, **kws):
         if not os.path.isabs(filename):
             filename = os.path.dirname(os.path.abspath(__file__))+os.sep+filename
@@ -34,7 +41,7 @@ class FixationDataFromCSV(FixationData):
                                  ('x',S.float32),
                                  ('y',S.float32)])
         trial, person, eye, t, x, y = (temp[n] for n in temp.dtype.names)
-        log.info('Found %i entries', trial.size)
+        log.info('Found %i entires', trial.size)
         for trial_id in S.unique(trial):
             self.trials[trial_id] = {}
             for person_id in S.unique(person):
@@ -43,7 +50,7 @@ class FixationDataFromCSV(FixationData):
                     idx = (trial == trial_id) & (person == person_id) & (eye == eye_id)
                     self.trials[trial_id][person_id][eye_id] = S.vstack((t[idx], x[idx], y[idx])).T  
         log.info('Loaded trials: ' + str(self.trials.keys()))
-
+        
 
 
 class EyeTrackerDataSource(DS.DataSource):
@@ -53,7 +60,10 @@ class EyeTrackerDataSource(DS.DataSource):
         self.trial_id  = trial_id
         self.person_id = person_id
         self._reset()
-        self.eye       = eye
+        self.T         = T
+        self.X         = X
+        self.Y         = Y
+        self.eye      = eye
         if eye is None:
             dL = self.data.query(trial_id=trial_id,person_id=person_id,eye='L')
             dR = self.data.query(trial_id=trial_id,person_id=person_id,eye='R')
@@ -62,21 +72,23 @@ class EyeTrackerDataSource(DS.DataSource):
             else:
                 self.eye = 'R'
         d = self.data.query(trial_id=trial_id,person_id=person_id,eye=self.eye)
-        assert d.ndim == 2
+        assert d.ndim == 2, d
+        self.t_begin = d[0,self.T]
+        self.t_end   = d[-1,self.T]
         super(EyeTrackerDataSource, self).__init__(number_of_samples_max=len(d), 
                                                    output_dim=d.shape[1],
                                                    **kws)
         
         
     def _reset(self):
-        self._t = 0
+        self._t = 0 # count the number of samples already drawn
         
         
     def _samples(self, n=1):
         s = self.data.query(trial_id=self.trial_id, 
                             person_id=self.person_id, 
                             eye=self.eye)[self._t:self._t+n]
-        self._t += n
+        self._t += n 
         return s.copy()
     
     
@@ -93,24 +105,19 @@ class EyeTrackerDataSource(DS.DataSource):
                       trial=self.trial_id, 
                       person=self.person_id,
                       eye=str(self.eye))
-    __str__ = __repr__
-    
-    
 
-class EyeTrackerDataSourceWithShift(EyeTrackerDataSource):
-    def __init__(self, shift_function, **kws):
-        super(EyeTrackerDataSourceWithShift,self).__init__(**kws)
-        self.shift_function = shift_function
+    def __str__(self):
+        if self.name is None:
+            name = ''
+        else:
+            name = str(self.name)
+        return '<DataSource %(name)s trial=%(trial)i, pers.=%(person)i %(eye)s>' \
+               % dict(name=name, 
+                      n=self.number_of_samples_until_now, 
+                      trial=self.trial_id, 
+                      person=self.person_id,
+                      eye=str(self.eye))
         
-    def _samples(self, n=1):
-        s = EyeTrackerDataSource._samples(self, n=n)
-        s = self.shift_function(s)
-        return s
-        
-        
-        
-
-    
     
     
     
