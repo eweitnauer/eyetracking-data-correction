@@ -93,7 +93,7 @@ class FixationDataFromCSV(FixationData):
 
 class EyeTrackerDataSource(DS.DataSource):
     '''A data source for the trial of a single person for one eye.'''
-    def __init__(self, fixation_data=None, trial_id=0, person_id=0, eye='L', **kws):
+    def __init__(self, fixation_data=None, trial_id=0, person_id=0, eye=None, **kws):
         self.data      = fixation_data
         self.trial_id  = trial_id
         self.person_id = person_id
