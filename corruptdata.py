@@ -51,6 +51,9 @@ class ShiftEyeTrackingData(mdp.Node):
         if self.shift_y != 0:
             data[where,Y] += S.minimum(data[where,T]-self.start_at_t, dt_max) * self.shift_y
         return data
+    
+    def __str__(self):
+        return self.__class__.__name__ + '(shift_x: %f, shift_y: %f, start_at_t: %s, end_at_t: %s'%(self.shift_x, self.shift_y, self.start_at_t, self.end_at_t)
               
 
 
