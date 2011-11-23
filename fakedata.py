@@ -75,7 +75,7 @@ class EyeTrackerFakeDataSource(DS.SeededDataSource):
         # And now we draw from the i-th Gaussian
         x,y = self.random.multivariate_normal( mean=self.locs[i],
                                                cov=self.sigmas[i]**2 * self.covariances[i])
-        dt = self.random.normal(loc=self.dt, scale=self.sigma_dt)
+        dt = S.absolute(self.random.normal(loc=self.dt, scale=self.sigma_dt))
         self._t += dt
         return [self._t, x, y] # return [ [T,X,Y] ]
 
