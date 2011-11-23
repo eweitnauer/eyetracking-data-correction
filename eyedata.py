@@ -1,3 +1,28 @@
+'''
+Load CSV data and provide a datasource for the samples in there.
+The returned values from the datasource are [t,x,y], each.
+
+@copyright: 
+    2011 Samuel John and Erik Weitnauer
+@author: 
+    Samuel John and Erik Weitnauer
+@contact: 
+    www.SamuelJohn.de, eweitnauer@gmail.com
+@license: 
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+'''
+__version__ = 1.0
+
 import datasource as DS
 import scipy as S
 import mdp
@@ -68,7 +93,7 @@ class FixationDataFromCSV(FixationData):
 
 class EyeTrackerDataSource(DS.DataSource):
     '''A data source for the trial of a single person for one eye.'''
-    def __init__(self, fixation_data=None, trial_id=0, person_id=0, eye='L', **kws):
+    def __init__(self, fixation_data=None, trial_id=0, person_id=0, eye=None, **kws):
         self.data      = fixation_data
         self.trial_id  = trial_id
         self.person_id = person_id
