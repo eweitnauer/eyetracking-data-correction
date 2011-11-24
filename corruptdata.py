@@ -29,14 +29,18 @@ class ShiftEyeTrackingData(mdp.Node):
     '''
     Add linear shift in x/y direction to a an EyeTrackerDataSource's output.
     '''
-    def __init__(self, shift_x=0, shift_y=0, start_at_t=0, end_at_t=S.Infinity, **kws):
-        '''The shifts are interpreted as x per time (and y per time).'''
+    def __init__(self, shift_x=0, shift_y=0, t0=0, t1=1, **kws):
+        '''A linear shift is applied to the data: at t <= t0 the shift
+        is 0, at t >= t1 the shift (shift_x, shift_y). Between t0 and t1 it is
+        linearely interpolated.'''
         super(ShiftEyeTrackingData, self).__init__(**kws)
         self.shift_x = shift_x
+        self.slope_x = shift_x / (t1-t0)
         self.shift_y = shift_y
-        self.start_at_t = start_at_t
-        self.end_at_t = end_at_t
-        assert start_at_t <= end_at_t
+        self.slope_y = shift_y / (t1-t0)
+        self.t0 = t0
+        self.t1 = t1
+        assert t0 <= t1
 
 
     def is_trainable(self): return False
@@ -44,16 +48,16 @@ class ShiftEyeTrackingData(mdp.Node):
         
     def _execute(self, data):
         ts = data[:,T]
-        where = S.where(self.start_at_t <= ts)
-        dt_max = self.end_at_t - self.start_at_t
+        where = S.where(ts > self.t0)
+        dt_max = self.t1 - self.t0
         if self.shift_x != 0:
-            data[where,X] += S.minimum(data[where,T]-self.start_at_t, dt_max) * self.shift_x
+            data[where,X] += S.minimum(data[where,T]-self.t0, dt_max) * self.slope_x
         if self.shift_y != 0:
-            data[where,Y] += S.minimum(data[where,T]-self.start_at_t, dt_max) * self.shift_y
+            data[where,Y] += S.minimum(data[where,T]-self.t0, dt_max) * self.slope_y
         return data
     
     def __str__(self):
-        return self.__class__.__name__ + '(shift_x: %f, shift_y: %f, start_at_t: %s, end_at_t: %s'%(self.shift_x, self.shift_y, self.start_at_t, self.end_at_t)
+        return self.__class__.__name__ + '(shift_x: %f, shift_y: %f, t0: %s, t1: %s'%(self.shift_x, self.shift_y, self.t0, self.t1)
               
 
 

@@ -54,7 +54,8 @@ class FixationDataFromCSV(FixationData):
        trail, person, file_name, eye,        time,  x,     y 
        int,   int,    string,   'L' or 'R',  float, float, float
     '''
-    def __init__(self, filename="fixation_data.csv", delimiter=",", skiprows=1, **kws):
+    def __init__(self, filename="fixation_data.csv", delimiter=",", skiprows=1,
+                 ranges=[[-100,1200],[600, -100]], **kws):
         if not os.path.isabs(filename):
             filename = os.path.dirname(os.path.abspath(__file__))+os.sep+filename
         super(FixationDataFromCSV, self).__init__(**kws)
@@ -87,6 +88,12 @@ class FixationDataFromCSV(FixationData):
                     self.trials[trial_id][person_id][eye_id] = S.vstack((t[idx2], x[idx2], y[idx2])).T
                 if len(filename[idx]) > 0: 
                     self.trials[trial_id][person_id]['img_filename'] = filename[idx][0]
+        if ranges is None:
+            self.ranges = [[x.min(), x.max()]
+                          ,[y.min(), y.max()]]
+        else:
+            assert len(ranges) == 2 and len(ranges[0]) == 2
+            self.ranges = ranges        
         log.info('Loaded trials: ' + str(self.trials.keys()))
         
 

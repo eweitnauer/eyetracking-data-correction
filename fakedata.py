@@ -36,7 +36,7 @@ class EyeTrackerFakeDataSource(DS.SeededDataSource):
     or rotated.
     '''
     def __init__(self, locs=[], sigmas=[], base_probabilities=[], covariances=[],
-                 dt=200, sigma_dt=50, **kws):
+                 dt=200, sigma_dt=50, ranges=None, **kws):
         '''
         @param locs:
             A list with locations [ (x0,y0), (x1,y1), ..., (xn,xy) ].
@@ -58,9 +58,12 @@ class EyeTrackerFakeDataSource(DS.SeededDataSource):
             In order to jitter the t-positions a bit, we draw the delta-t from
             a normal distribution with mean=dt and sigma=sigma_dt.
             Default to 50.
+        @param ranges:
+            [[xmin, xmax],[ymin,ymax]], if not set, it is automatically set to
+            the actual data range of the locations plus 4*sigma.
         '''
         n = len(locs)
-        self.locs = locs
+        self.locs = S.array(locs)
         if sigmas == [] or sigmas is None:
             self.sigmas = [1] * n
         else:
@@ -79,6 +82,14 @@ class EyeTrackerFakeDataSource(DS.SeededDataSource):
         else:
             assert len(covariances) == n
             self.covariances = S.array(covariances)
+        
+        if ranges is None:
+            margin = max(self.sigmas) * 4
+            self.ranges = [[self.locs[:,0].min()-margin, self.locs[:,0].max()+margin]
+                          ,[self.locs[:,1].min()-margin, self.locs[:,1].max()+margin]]
+        else:
+            assert len(ranges) == 2 and len(ranges[0]) == 2
+            self.ranges = ranges
 
         self.dt = dt
         self.sigma_dt = sigma_dt
