@@ -57,7 +57,6 @@ class ShiftEyeTrackingData(mdp.Node):
         return data
     
     def __str__(self):
-              
         return self.__class__.__name__ + '(shift_x=%.2f, shift_y=%.2f, t0=%.1f, t1=%.1f'%(self.shift_x, self.shift_y, self.t0, self.t1)
     __repr__ = __str__
 
