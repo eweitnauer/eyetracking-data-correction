@@ -57,7 +57,7 @@ class ShiftEyeTrackingData(mdp.Node):
         return data
     
     def __str__(self):
-        return self.__class__.__name__ + '(shift_x=%.2f, shift_y=%.2f, t0=%.1f, t1=%.1f'%(self.shift_x, self.shift_y, self.t0, self.t1)
+        return self.__class__.__name__ + '(shift_x=%.2f, shift_y=%.2f, t0=%.0f, t1=%.0f'%(self.shift_x, self.shift_y, self.t0, self.t1)
     __repr__ = __str__
 
 
@@ -82,6 +82,6 @@ class JerkEyeTrackingData(mdp.Node):
         return data
 
     def __str__(self):
-        return self.__class__.__name__ + '(jerk_at_t=%.1f, jerk_x=%.2f, jerk_y=%.2f'%(self.jerk_at_t, self.jerk_x, self.jerk_y)
+        return self.__class__.__name__ + '(jerk_at_t=%.0f, jerk_x=%.2f, jerk_y=%.2f'%(self.jerk_at_t, self.jerk_x, self.jerk_y)
     __repr__ = __str__
 

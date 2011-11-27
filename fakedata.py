@@ -114,3 +114,9 @@ class EyeTrackerFakeDataSource(DS.SeededDataSource):
         self._t += dt
         return [self._t, x, y] # return [ [T,X,Y] ]
 
+    def __str__(self):
+        locs = ', '.join( [ "("+format(x,".0f") +','+ format(y,".0f")+")" for x,y in self.locs] )
+        sigmas = ','.join( [ format(s,".1f") for s in self.sigmas] )
+        return self.__class__.__name__ + "(locs=[%s], sigmas=[%s], dt=%.1f)" %(locs, sigmas, self.dt )
+        
+    __repr__ = __str__    
