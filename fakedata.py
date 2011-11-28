@@ -36,7 +36,7 @@ class EyeTrackerFakeDataSource(DS.SeededDataSource):
     or rotated.
     '''
     def __init__(self, locs=[], sigmas=[], base_probabilities=[], covariances=[],
-                 dt=200, sigma_dt=50, ranges=None, **kws):
+                 dt=200, sigma_dt=50, ranges=None, uniform_random_fixations_probability=0.1, **kws):
         '''
         @param locs:
             A list with locations [ (x0,y0), (x1,y1), ..., (xn,xy) ].
@@ -94,6 +94,8 @@ class EyeTrackerFakeDataSource(DS.SeededDataSource):
         self.dt = dt
         self.sigma_dt = sigma_dt
         
+        self.uniform_random_fixations_probability = uniform_random_fixations_probability
+        
         super(EyeTrackerFakeDataSource, self).__init__(output_dim=3, **kws)
         self._reset()
         
@@ -103,15 +105,26 @@ class EyeTrackerFakeDataSource(DS.SeededDataSource):
     
     
     def _sample(self):
+        xr = self.ranges[0]
+        yr = self.ranges[1]
+        dt = S.absolute(self.random.normal(loc=self.dt, scale=self.sigma_dt))
+        self._t += dt
+        # First check if we create a new uniform random fixation
+        if self.random.uniform() < self.uniform_random_fixations_probability:
+            x = self.random.uniform(low=xr[0], high=xr[1])
+            y = self.random.uniform(low=yr[0], high=yr[1])
+            return [self._t, x, y] # return [ [T,X,Y] ]
         # choose the right Gaussian by using the base_probabilities:
         r  = self.random.uniform(low=0.0, high=self._cs[-1])
         for i in range(len(self.locs)):
             if self._cs[i] > r: break
         # And now we draw from the i-th Gaussian
-        x,y = self.random.multivariate_normal( mean=self.locs[i],
-                                               cov=self.sigmas[i]**2 * self.covariances[i])
-        dt = S.absolute(self.random.normal(loc=self.dt, scale=self.sigma_dt))
-        self._t += dt
+        while True:
+            x,y = self.random.multivariate_normal( mean=self.locs[i],
+                                                   cov=self.sigmas[i]**2 * self.covariances[i])
+            if not(xr[0] < x < xr[1]): continue
+            if not(yr[0] < y < yr[1]): continue
+            break
         return [self._t, x, y] # return [ [T,X,Y] ]
 
     def __str__(self):
