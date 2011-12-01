@@ -100,7 +100,8 @@ class EyeTrackerFakeDataSource(DS.SeededDataSource):
         self._reset()
         
         
-    def _reset(self):
+    def _reset(self, **kws):
+        super(EyeTrackerFakeDataSource,self)._reset(**kws)
         self._t = 0
     
     
