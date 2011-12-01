@@ -35,25 +35,26 @@ class ShiftEyeTrackingData(mdp.Node):
         linearely interpolated.'''
         super(ShiftEyeTrackingData, self).__init__(**kws)
         self.shift_x = shift_x
-        self.slope_x = shift_x / (t1-t0)
+        #self.slope_x = shift_x / (t1-t0)
         self.shift_y = shift_y
-        self.slope_y = shift_y / (t1-t0)
+        #self.slope_y = shift_y / (t1-t0)
         self.t0 = t0
         self.t1 = t1
         assert t0 <= t1
-
 
     def is_trainable(self): return False
 
         
     def _execute(self, data):
+        slope_x = self.shift_x / (self.t1-self.t0)
+        slope_y = self.shift_y / (self.t1-self.t0)
         ts = data[:,T]
         where = S.where(ts > self.t0)
         dt_max = self.t1 - self.t0
         if self.shift_x != 0:
-            data[where,X] += S.minimum(data[where,T]-self.t0, dt_max) * self.slope_x
+            data[where,X] += S.minimum(data[where,T]-self.t0, dt_max) * slope_x
         if self.shift_y != 0:
-            data[where,Y] += S.minimum(data[where,T]-self.t0, dt_max) * self.slope_y
+            data[where,Y] += S.minimum(data[where,T]-self.t0, dt_max) * slope_y
         return data
     
     def __str__(self):
