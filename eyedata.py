@@ -85,23 +85,40 @@ class FixationDataFromCSV(FixationData):
                                  ('y',S.float32)])
         trial, person, filename, eye, t, x, y = (temp[n] for n in temp.dtype.names)
         log.info('Found %i entires', trial.size)
+        #self.trials['all'] = {} # special dict for all trials
+        
         for trial_id in S.unique(trial):
             self.trials[trial_id] = {}
             for person_id in S.unique(person):
                 self.trials[trial_id][person_id] = {}
                 idx = (trial == trial_id) & (person == person_id)
+                #idx_all_trials = (person == person_id)
                 for eye_id in ('L','R','X'):
                     idx2 = idx & (eye == eye_id)
+                    #idx2_all_trials = idx_all_trials & (eye == eye_id)
                     self.trials[trial_id][person_id][eye_id] = S.vstack((t[idx2], x[idx2], y[idx2])).T
+                    # special handling for trail_id == 'all'
+                    #self.trials['all'][person_id][eye_id] = S.vstack((t[idx2_all_trials], x[idx2_all_trials], y[idx2_all_trials])).T
                 if len(filename[idx]) > 0: 
                     self.trials[trial_id][person_id]['img_filename'] = filename[idx][0]
+                
         if ranges is None:
             self.ranges = [[x.min(), x.max()]
                           ,[y.min(), y.max()]]
         else:
             assert len(ranges) == 2 and len(ranges[0]) == 2
-            self.ranges = ranges        
+            self.ranges = ranges
+                    
         log.info('Loaded trials: ' + str(self.trials.keys()))
+        
+        
+class FixationDataFromCSVwithGroundTruth(FixationDataFromCSV):    
+    def __init__(self, ground_truth=True, **kws):
+        super(FixationDataFromCSVwithGroundTruth, self).__init__(**kws)    
+        
+        # use all trials
+        # for each trial
+        
         
 
 
