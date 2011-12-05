@@ -40,6 +40,8 @@ class FixationData(object):
         
         
     def query(self, trial_id, person_id, eye='L'):
+        '''Return all entries for the given trial_id (int) person_id (int) and 
+        eye (str of len 1).'''
         return self.trials[trial_id][person_id][eye]
     
     def get_imagepath(self, trial_id, person_id):
@@ -51,10 +53,15 @@ class FixationDataFromCSV(FixationData):
     '''Load CSV file and prepare the data for pythonic access.
     
     The format of the CSV file should be:
-       trail, person, file_name, eye,        time,  x,     y 
-       int,   int,    string,   'L' or 'R',  float, float, float
+       trail, person, file_name, eye,               time,  x,    y 
+       int,   int,    string,   'L' or 'R' or 'X',  float, float, float
+       
+    @note:
+        The eye 'X' does not denote a fixation but the ground truth information
+        of the true object location to look at for that trial/person. At least
+        this is our interpretation for one of our data sets.
     '''
-    def __init__(self, filename="fixation_data.csv", delimiter=",", skiprows=1,
+    def __init__(self, filename="fixation_data_pbp.csv", delimiter=",", skiprows=1,
                  ranges=[[-100,1200],[600, -100]], **kws):
         if not os.path.isabs(filename):
             filename = os.path.dirname(os.path.abspath(__file__))+os.sep+filename
@@ -83,7 +90,7 @@ class FixationDataFromCSV(FixationData):
             for person_id in S.unique(person):
                 self.trials[trial_id][person_id] = {}
                 idx = (trial == trial_id) & (person == person_id)
-                for eye_id in ('L','R'):
+                for eye_id in ('L','R','X'):
                     idx2 = idx & (eye == eye_id)
                     self.trials[trial_id][person_id][eye_id] = S.vstack((t[idx2], x[idx2], y[idx2])).T
                 if len(filename[idx]) > 0: 
@@ -175,6 +182,8 @@ if __name__ == '__main__':
     d = FixationDataFromCSV()
     #print(d.trials)
     DS = EyeTrackerDataSource(fixation_data=d, trial_id=7, person_id=5, eye=None)
+    for i in range(6):
+        print DS.sample()
     print(repr(DS))
 
 
