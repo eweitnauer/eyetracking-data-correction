@@ -52,41 +52,60 @@ class FixationData(object):
 class FixationDataFromCSV(FixationData):
     '''Load CSV file and prepare the data for pythonic access.
     
-    The format of the CSV file should be:
-       trail, person, file_name, eye,               time,  x,    y 
-       int,   int,    string,   'L' or 'R' or 'X',  float, float, float
-       
+    The format of the CSV file should be (iff image_dir is set):
+       trail, person, img_filename, eye,               time,  x,    y 
+       int,   int,    string,      'L' or 'R' or 'X',  float, float, float
+    or:
+       trail, person, eye,               time,  x,    y 
+       int,   int,    'L' or 'R' or 'X',  float, float, float
+    
     @note:
         The eye 'X' does not denote a fixation but the ground truth information
         of the true object location to look at for that trial/person. At least
         this is our interpretation for one of our data sets.
     '''
     def __init__(self, filename="fixation_data_pbp.csv", delimiter=",", skiprows=1,
-                 ranges=[[-100,1200],[600, -100]], **kws):
+                 ranges=[[-100,1200],[600, -100]], image_dir=None, **kws):
         if not os.path.isabs(filename):
             filename = os.path.dirname(os.path.abspath(__file__))+os.sep+filename
         super(FixationDataFromCSV, self).__init__(**kws)
         log = logging.getLogger('FixationData')
         log.info('Loading %s ...', filename)
         
-        self.images_dir = os.path.dirname(os.path.abspath(__file__)) + os.sep + 'imgs' + os.sep
-        
-        # manually unpack for numpy 1.5 compatibility
-        temp = S.loadtxt(filename, 
-                         delimiter=delimiter, 
-                         skiprows=skiprows,
-                         unpack=False,
-                         dtype=[ ('trail',S.int32),
-                                 ('person',S.int32),
-                                 ('filename','S40'),
-                                 ('eye','S1'), #string of len 1
-                                 ('t',S.float32),
-                                 ('x',S.float32),
-                                 ('y',S.float32)])
-        trial, person, filename, eye, t, x, y = (temp[n] for n in temp.dtype.names)
-        log.info('Found %i entires', trial.size)
-        #self.trials['all'] = {} # special dict for all trials
-        
+        if image_dir is not None:
+            self.images_dir = os.path.dirname(os.path.abspath(__file__)) + os.sep + image_dir + os.sep
+            
+            # manually unpack for numpy 1.5 compatibility
+            temp = S.loadtxt(filename, 
+                             delimiter=delimiter, 
+                             skiprows=skiprows,
+                             unpack=False,
+                             dtype=[ ('trail',S.int32),
+                                     ('person',S.int32),
+                                     ('img_filename','S40'),
+                                     ('eye','S1'), #string of len 1
+                                     ('t',S.float32),
+                                     ('x',S.float32),
+                                     ('y',S.float32)])
+            trial, person, img_filename, eye, t, x, y = (temp[n] for n in temp.dtype.names)
+            log.info('Found %i entires', trial.size)
+            #self.trials['all'] = {} # special dict for all trials
+        else:
+            # manually unpack for numpy 1.5 compatibility
+            temp = S.loadtxt(filename, 
+                             delimiter=delimiter, 
+                             skiprows=skiprows,
+                             unpack=False,
+                             dtype=[ ('trail',S.int32),
+                                     ('person',S.int32),
+                                     ('eye','S1'), #string of len 1
+                                     ('t',S.float32),
+                                     ('x',S.float32),
+                                     ('y',S.float32)])
+            trial, person, eye, t, x, y = (temp[n] for n in temp.dtype.names)
+            img_filename = None
+            log.info('Found %i entires', trial.size)
+            
         for trial_id in S.unique(trial):
             self.trials[trial_id] = {}
             for person_id in S.unique(person):
@@ -99,8 +118,8 @@ class FixationDataFromCSV(FixationData):
                     self.trials[trial_id][person_id][eye_id] = S.vstack((t[idx2], x[idx2], y[idx2])).T
                     # special handling for trail_id == 'all'
                     #self.trials['all'][person_id][eye_id] = S.vstack((t[idx2_all_trials], x[idx2_all_trials], y[idx2_all_trials])).T
-                if len(filename[idx]) > 0: 
-                    self.trials[trial_id][person_id]['img_filename'] = filename[idx][0]
+                if img_filename is not None and len(img_filename[idx]) > 0: 
+                    self.trials[trial_id][person_id]['img_filename'] = img_filename[idx][0]
                 
         if ranges is None:
             self.ranges = [[x.min(), x.max()]
@@ -116,8 +135,11 @@ class FixationDataFromCSVwithGroundTruth(FixationDataFromCSV):
     def __init__(self, ground_truth=True, **kws):
         super(FixationDataFromCSVwithGroundTruth, self).__init__(**kws)    
         
-        # use all trials
-        # for each trial
+        # use all trials and show one session (200 trials) as one trial
+        # for each trial (of the 200) find the last fixation
+        # and the ground truth "X"
+        # ground_truth defines wich kind is returned by self.query
+        # self.ranges should be the same for both
         
         
 
@@ -172,14 +194,14 @@ class EyeTrackerDataSource(DS.DataSource):
             name = ''
         else:
             name = str(self.name)
-        return '<DataSource %(name)s oudput_dim=%(output_dim)i with %(n)i/%(max)s samples, trial=%(trial)i, person=%(person)i, eye=%(eye)s>' \
+        return '<DataSource %(name)s oudput_dim=%(output_dim)i with /%(max)s fixations, trial=%(trial)i, person=%(person)i, eye=%(eye)s>' \
                % dict(name=name, 
                       output_dim=self.output_dim, 
-                      n=self.number_of_samples_until_now, 
                       max=str(self.number_of_samples_max), 
                       trial=self.trial_id, 
                       person=self.person_id,
                       eye=str(self.eye))
+
 
     def __str__(self):
         if self.name is None:
@@ -197,7 +219,7 @@ class EyeTrackerDataSource(DS.DataSource):
     
     
 if __name__ == '__main__':
-    d = FixationDataFromCSV()
+    d = FixationDataFromCSV(filename="fixation_data_pbp.csv", image_dir='pbp_imgs')
     #print(d.trials)
     DS = EyeTrackerDataSource(fixation_data=d, trial_id=7, person_id=5, eye=None)
     for i in range(6):
