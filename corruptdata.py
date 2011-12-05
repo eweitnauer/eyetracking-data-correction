@@ -58,6 +58,7 @@ class ShiftEyeTrackingData(mdp.Node):
         return data
     
     def __str__(self):
+        if self.shift_x == 0 and self.shift_y == 0: return "NoShift"  
         return self.__class__.__name__ + '(shift_x=%.2f, shift_y=%.2f, t0=%.0f, t1=%.0f'%(self.shift_x, self.shift_y, self.t0, self.t1)
     __repr__ = __str__
 
