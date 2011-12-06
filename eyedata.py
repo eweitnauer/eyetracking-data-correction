@@ -130,18 +130,6 @@ class FixationDataFromCSV(FixationData):
                     
         log.info('Loaded trials: ' + str(self.trials.keys()))
         
-        
-class FixationDataFromCSVwithGroundTruth(FixationDataFromCSV):    
-    def __init__(self, ground_truth=True, **kws):
-        super(FixationDataFromCSVwithGroundTruth, self).__init__(**kws)    
-        
-        # use all trials and show one session (200 trials) as one trial
-        # for each trial (of the 200) find the last fixation
-        # and the ground truth "X"
-        # ground_truth defines wich kind is returned by self.query
-        # self.ranges should be the same for both
-        
-        
 
 
 class EyeTrackerDataSource(DS.DataSource):
@@ -216,7 +204,47 @@ class EyeTrackerDataSource(DS.DataSource):
                       eye=str(self.eye))
         
     
-    
+
+# Unfortunately we have to define a new DS to handle the ground truth data that 
+# is encoded as the eye "X"
+class FixationDataFromCSVwithGroundTruth(FixationDataFromCSV):    
+    def __init__(self, ranges=[[-100,2000],[2000, -100]], **kws):
+        super(FixationDataFromCSVwithGroundTruth, self).__init__(image_dir=None, **kws) # will do the parsing    
+        all_trial_ids = sorted(self.trials.keys())
+        new_trials = {}
+        new_trials[0] = {} # there will be only trial 0 (no other trials!)
+        all_person_ids = sorted(self.trials[0].keys()) # in a trial are the persons stored
+        for pid in all_person_ids:
+            new_trials[0][pid] = {}
+            new_trials[0][pid]['L'] = []
+            new_trials[0][pid]['R'] = []
+            new_trials[0][pid]['X'] = []
+            
+        for tid in all_trial_ids:
+            for pid in sorted(self.trials[tid].keys()):
+                # get the true locations 
+                gt = S.array(self.query(tid, person_id=pid, eye='X'))
+                for eye_id in ('L','R'):
+                    tmp = S.array(self.query(tid, person_id=pid, eye=eye_id))
+                    if len(tmp) > 0:
+                        t_max = S.argmax(tmp[:,0])
+                        
+                        # take only the last fixation in this trial=tid
+                        # and set the time to the time of the gt
+                        lt = new_trials[0][pid][eye_id][-1][0] if len(new_trials[0][pid][eye_id]) >0 else 0
+                        #gt[0][0] += lt
+                        new_trials[0][pid][eye_id].append( [gt[0][0]+lt, tmp[t_max][1], tmp[t_max][2] ] )  
+                        #                                  time of gt, the last fixations location x,y
+                        new_trials[0][pid]['X'].append( [gt[0][0]+lt, gt[0][1], gt[0][2]] )
+        for pid in new_trials[0].keys():
+            for eye_id in new_trials[0][pid].keys():
+                new_trials[0][pid][eye_id] = S.array(new_trials[0][pid][eye_id]) 
+        self._old_trials = self.trials
+        self.trials = new_trials 
+        # for each trial (of the 200) find the last fixation
+        # and the ground truth "X"
+        # ground_truth defines wich kind is returned by self.query
+        # self.ranges should be the same for both    
     
 if __name__ == '__main__':
     d = FixationDataFromCSV(filename="fixation_data_pbp.csv", image_dir='pbp_imgs')

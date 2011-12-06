@@ -10,6 +10,6 @@ systematic errors in the datasource.
 @author: 
     Samuel John, Erik Weitnauer
 '''
-from eyedata import T, X, Y, FixationData, FixationDataFromCSV, EyeTrackerDataSource
+from eyedata import T, X, Y, FixationData, FixationDataFromCSV, EyeTrackerDataSource, FixationDataFromCSVwithGroundTruth
 from fakedata import EyeTrackerFakeDataSource
 from corruptdata import ShiftEyeTrackingData, JerkEyeTrackingData
