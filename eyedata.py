@@ -134,9 +134,9 @@ class FixationDataFromCSV(FixationData):
 
 class EyeTrackerDataSource(DS.DataSource):
     '''A data source for the trial of a single person for one eye.'''
-    def __init__(self, fixation_data=None, trial_id=0, person_id=0, eye=None, **kws):
-        self.data      = fixation_data
-        self.ranges = fixation_data.ranges
+    def __init__(self, fixation_data=None, trial_id=0, person_id=0, eye=None, ranges=None, **kws):
+        self.data   = fixation_data
+        self.ranges = ranges if ranges is not None else fixation_data.ranges
         self.trial_id  = trial_id
         self.person_id = person_id
         self._reset()
